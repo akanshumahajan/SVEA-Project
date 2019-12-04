@@ -1,0 +1,20 @@
+<launch>
+
+  <!-- -->
+  <arg name="camera_frame" default="test_camera"/>
+  <arg name="fiducial_pose_topic" default="/fiducial_transforms"/>  
+  <arg name="fiducial_id" default="0"/>  
+  <arg name="output" default="screen"/>
+
+
+
+  <node type="aruco_tf.py" pkg="svea" name="aruco_tf" output="$(arg output)">
+    <!-- show hidden files to find map file -->
+    <param name="camera_frame" value="$(arg camera_frame)" />
+    <param name="fiducial_pose_topic" value="$(arg fiducial_pose_topic)" />
+    <param name="fiducial_id" value="$(arg fiducial_id)" />
+
+  </node>
+
+
+</launch>
