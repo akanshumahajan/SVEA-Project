@@ -11,7 +11,7 @@ import tf_conversions
 #import fiducial_msgs.msg
 
 from fiducial_msgs.msg import FiducialTransformArray, FiducialArray
-from geometry_msgs.msg import Pose, PoseWithCovariance
+from geometry_msgs.msg import Pose, PoseWithCovariance, TransformStamped
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
@@ -42,9 +42,15 @@ class ArucoTF():
         # Delay briefly for subscriber to find message
         rospy.sleep(2)
 
-    def tf_calc(self):
+    def tf_calc_and_pub(self):
         # initialize old_time for comparison
         old_time = 0
+        # initilize broadcaster and message before loop
+        br = tf2_ros.TransformBroadcaster()
+        t = TransformStamped()
+        t.header.frame_id = self.cam_frame
+        t.child_frame_id = "fid"+str(self.fid_id)
+
 
         while not rospy.is_shutdown():
             # Use a temp value so self.fid_pose.transforms 
@@ -55,8 +61,12 @@ class ArucoTF():
             if time > old_time + .033 : # .033 sec = 30 hz
                 for i in range(len(temp)): # number of detected markers
                     if temp[i].fiducial_id == self.fid_id: # if we see desired marker
-                        #self.rel_fid_pose = temp[i]
-                        print(temp[i])
+                        t.header.stamp = rospy.Time.now()
+                        t.transform = temp[i].transform
+                        br.sendTransform(t)
+
+                        #br.sendTransform((trans.x, trans.y, trans.z),(rot.x, rot.y, rot.z, rot.w),
+                                        #rospy.Time.now(), "fid"+str(self.fid_id), self.cam_frame)
             
             old_time = time # update time
 
@@ -81,4 +91,4 @@ if __name__ == '__main__':
     rospy.loginfo("Successful initilization of node")
 
     tf_ar = ArucoTF()
-    tf_ar.tf_calc()
+    tf_ar.tf_calc_and_pub()

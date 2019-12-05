@@ -1,7 +1,11 @@
 <launch>
 
+
+  <!-- Launch necessary background processes -->
+  <include file="$(find svea)/launch/filtering_project_background.launch" />
+
   <!-- -->
-  <arg name="camera_frame" default="test_camera"/>
+  <arg name="camera_frame" default="logicam"/>
   <arg name="fiducial_pose_topic" default="/fiducial_transforms"/>  
   <arg name="fiducial_id" default="0"/>  
   <arg name="output" default="screen"/>
@@ -15,6 +19,10 @@
     <param name="fiducial_id" value="$(arg fiducial_id)" />
 
   </node>
+  
+
+
+
 
 
 </launch>
