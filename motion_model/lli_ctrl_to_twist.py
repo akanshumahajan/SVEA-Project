@@ -44,6 +44,8 @@ class Republish():
         rate = rospy.Rate(100) # 100hz
 
         while not rospy.is_shutdown():
+            # Likely need to change this to contunially publish commands when not on remote control
+            # RC constantly publishes controls, while computer would send command until it needs to be changed
             if self.ctrl_msg != None:
                 # Unpack ctrl message
                 # Steering range (radians) - assumed linear across range
