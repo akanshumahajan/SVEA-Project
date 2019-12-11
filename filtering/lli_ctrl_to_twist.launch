@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+    
+    <node pkg="svea" type="lli_ctrl_to_twist.py" name="ctrl_to_twist" output="screen">
+        <param name="ctrl_message_topic" value="/SVEA6/lli/ctrl_actuated" />
+        <param name="twist_message_topic" value="/cmd_vel_twist" />
+        <!--param name="twist_message_topic" value="/SVEA0/twist_from_control" /-->
+        <param name="est_frame_id" value="base_link" />
+        
+    </node>
+
+</launch>
