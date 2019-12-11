@@ -44,39 +44,41 @@ class Republish():
         rate = rospy.Rate(100) # 100hz
 
         while not rospy.is_shutdown():
-            # Unpack ctrl message
-            # Steering range (radians) - assumed linear across range
-            # msg [-127,127] | actual [-pi/4,pi/4] | direction (right,left)
-            c_ang = self.ctrl_msg.steering*(pi/4)/127
-            # Velocity range 1st gear (m/s) - assumed linear across range with deadzone [-20,20] 
-            # msg [-127,127] | actual [-1.5,1.5] | direction (back,forward)
-            dz = [-20,20]
-            if self.ctrl_msg.velocity < dz(0):
-                c_vel = (self.ctrl_msg.velocity - dz(0))*-1.5/(-127 - dz(0))
-            else if self.ctrl_msg.velocity > dz(1):
-                c_vel = (self.ctrl_msg.velocity - dz(1))*1.5/(127 - dz(1))
-            else:
-                c_vel = 0
+            if self.ctrl_msg != None:
+                # Unpack ctrl message
+                # Steering range (radians) - assumed linear across range
+                # msg [-127,127] | actual [-pi/4,pi/4] | direction (right,left)
+                c_ang = self.ctrl_msg.steering*(math.pi/4)/127
+                # Velocity range 1st gear (m/s) - assumed linear across range with deadzone [-20,20] 
+                # msg [-127,127] | actual [-1.5,1.5] | direction (back,forward)
+                dz = [-20,20]
+                max_speed = 2.5
+                if self.ctrl_msg.velocity < dz[0]:
+                    c_vel = (self.ctrl_msg.velocity - dz[0])*-1*max_speed/(-127 - dz[0])
+                elif self.ctrl_msg.velocity > dz[1]:
+                    c_vel = (self.ctrl_msg.velocity - dz[1])*max_speed/(127 - dz[1])
+                else:
+                    c_vel = 0
 
-            # Apply Bicycyle Model
-            wheelbase = .32 # in meters
-            B = atan2((1/2)*tan(c_ang))
-            x_vel = c_vel*cos(B)
-            y_vel = c_vel*sin(B)
-            ang_vel = (c_vel/(wheelbase/2))*sin(B)
+                # Apply Bicycyle Model
+                wheelbase = .32 # in meters
+                B = math.atan2(math.tan(c_ang),2)
+                x_vel = c_vel*math.cos(B)
+                y_vel = c_vel*math.sin(B)
+                ang_vel = (c_vel/(wheelbase/2))*math.sin(B)
 
-            # Build Header for current time stamp
-            self.twist_msg.header.seq += 1
-            self.twist_msg.header.stamp = rospy.Time.now()
-            
-            # Build Twist using bicycle model
-            self.twist_msg.twist.linear.x = x_vel
-            self.twist_msg.twist.linear.y = y_vel
-            self.twist_msg.twist.angular.z = ang_vel
+                # Build Header for current time stamp
+                self.twist_msg.header.seq += 1
+                self.twist_msg.header.stamp = rospy.Time.now()
+                
+                # Build Twist using bicycle model
+                self.twist_msg.twist.twist.linear.x = x_vel
+                self.twist_msg.twist.twist.linear.y = y_vel
+                self.twist_msg.twist.twist.angular.z = ang_vel
 
-            # Publish message
-            self.pub.publish(self.twist_msg)
-            rate.sleep()
+                # Publish message
+                self.pub.publish(self.twist_msg)
+                rate.sleep()
 
 
     # Callback function for fiducial pose subscription (from aruco_detect)
