@@ -5,10 +5,17 @@
   <include file="$(find svea)/launch/filtering_project_background.launch" />
 
   <!-- -->
-  <arg name="camera_frame" default="logicam"/>
+  <arg name="camera_frame" default="logicam_stat"/>
   <arg name="fiducial_pose_topic" default="/fiducial_transforms"/>  
   <arg name="fiducial_id" default="0"/>  
+  <arg name="est_vehicle_frame" default="aruco_base_link"/>
+  <arg name="map_pose_estimate_topic" default="aruco_base_link_pose"/>
+  <arg name="map_frame" default="map"/>
   <arg name="output" default="screen"/>
+  <arg name="lin_cov_aruco" default="0.00001"/>
+  <arg name="ang_cov_aruco" default="0.00001"/>
+   
+
 
 
 
@@ -17,6 +24,12 @@
     <param name="camera_frame" value="$(arg camera_frame)" />
     <param name="fiducial_pose_topic" value="$(arg fiducial_pose_topic)" />
     <param name="fiducial_id" value="$(arg fiducial_id)" />
+    <param name="est_vehicle_frame" value="$(arg est_vehicle_frame)" />
+    <param name="map_pose_estimate_topic" value="$(arg map_pose_estimate_topic)" />
+    <param name="map_frame" value="$(arg map_frame)" />
+    <param name="lin_cov_aruco" type="double" value="$(arg lin_cov_aruco)" />
+    <param name="ang_cov_aruco" type="double" value="$(arg ang_cov_aruco)" />
+    
 
   </node>
   
