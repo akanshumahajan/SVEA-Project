@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<!--
+    Default odometry launch file
+-->
+
+
+<launch>
+  <!-- IMU -->
+  <node ns="imu" name="imu_node" pkg="svea_sensors" type="bno055_i2c_node" respawn="true" respawn_delay="2">
+    <param name="device" type="string" value="/dev/i2c-1"/>
+    <param name="address" type="int" value="40"/> <!-- 0x28 == 40 is the default for BNO055 -->
+    <param name="frame_id" type="string" value="imu"/>
+  </node>
+
+  <!-- Static transforms for sensors -->
+  <include file="$(find svea_sensors)/launch/transforms.launch" />
+
+    <!-- Pull control message -->
+    <node pkg="rosserial_python" type="serial_node.py" name="serial_node">
+        <!-- <param name="port" value="/dev/arduinoPWM"/> -->
+        <param name="port" value="/dev/ttyACM0"/>
+        <param name ="baud" value="250000" />
+        <remap from="/lli/ctrl_request" to="/SVEA0/lli/ctrl_request" />
+        <remap from="/lli/ctrl_actuated" to="/SVEA0/lli/ctrl_actuated" />
+    </node>
+
+  <!-- Launch necessary background processes -->
+  <!-- <include file="$(find svea)/launch/filtering_project_background.launch" /> -->
+
+  <!-- -->
+
+  <arg name="imu0" default="/imu/data"/>
+  <arg name="twist0" default="/SVEA0/twist_from_control"/>
+  <arg name="pose_observation_topic" default="aruco_base_link_pose"/>
+
+  <arg name="particle_count" default="1000"/>
+
+  <arg name="initial_estimate_covariance" default="10.0"/>
+  <arg name="linear_process_covariance" default=".1"/>
+  <arg name="angular_process_covariance" default=".15"/>
+  <arg name="linear_observation_covariance" default=".01"/>
+  <arg name="angular_observation_covariance" default=".05"/>
+  
+  <arg name="output" default="screen"/>
+
+
+  <!-- <arg name="camera_frame" default="logicam_stat"/>
+  <arg name="fiducial_pose_topic" default="/fiducial_transforms"/>  
+  <arg name="fiducial_id" default="0"/>  
+  <arg name="est_vehicle_frame" default="aruco_base_link"/>
+  <arg name="map_frame" default="map"/>
+  <arg name="lin_cov_aruco" default="0.001"/>
+  <arg name="ang_cov_aruco" default="0.001"/> -->
+   
+  <node type="particle_filter_aruco_remote.py" pkg="svea" name="particle_filter_imu_ctrl_aruco_remote" output="$(arg output)">
+    <param name="imu0" value="$(arg imu0)" />
+    <param name="twist0" value="$(arg twist0)" />
+    <param name="pose_observation_topic" value="$(arg pose_observation_topic)" />
+
+    <param name="particle_count" type= "int" value="$(arg particle_count)" />
+
+    <param name="initial_estimate_covariance" type= "double" value="$(arg initial_estimate_covariance)" />
+    <param name="linear_process_covariance" type= "double" value="$(arg linear_process_covariance)" />
+    <param name="angular_process_covariance" type= "double" value="$(arg angular_process_covariance)" />
+    <param name="linear_observation_covariance" type= "double" value="$(arg linear_observation_covariance)" />
+    <param name="angular_observation_covariance" type= "double" value="$(arg angular_observation_covariance)" />
+
+
+    <!-- <param name="fiducial_pose_topic" value="$(arg fiducial_pose_topic)" />
+    <param name="fiducial_id" value="$(arg fiducial_id)" />
+    <param name="est_vehicle_frame" value="$(arg est_vehicle_frame)" />
+    <param name="map_pose_estimate_topic" value="$(arg map_pose_estimate_topic)" />
+    <param name="map_frame" value="$(arg map_frame)" />
+    <param name="lin_cov_aruco" type="double" value="$(arg lin_cov_aruco)" />
+    <param name="ang_cov_aruco" type="double" value="$(arg ang_cov_aruco)" /> -->
+
+  </node>
+
+</launch>
