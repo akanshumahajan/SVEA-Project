@@ -70,73 +70,78 @@ world_frame: odom           # Defaults to the value of odom_frame if unspecified
 # sensor_msgs/Imu). To add an input, simply append the next number in the sequence to its "base" name, e.g., twist0,
 # odom1, twist0, twist1, imu0, imu1, imu2, etc. The value should be the topic name. These parameters obviously have no
 # default values, and must be specified.
-twist0: /cmd_vel_twist
+# twist0: /cmd_vel_twist
 
-# Each sensor reading updates some or all of the filter's state. These options give you greater control over which
-# values from each measurement are fed to the filter. For example, if you have an odometry message as input, but only
-# want to use its Z position value, then set the entire vector to false, except for the third entry. The order of the
-# values is x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az. Note that not some message types
-# do not provide some of the state variables estimated by the filter. For example, a TwistWithCovarianceStamped message
-# has no pose information, so the first six values would be meaningless in that case. Each vector defaults to all false
-# if unspecified, effectively making this parameter required for each sensor.
-twist0_config: [false,  false,  false,
-               false, false, false,
-               true, true, false,
-               false, false, true,
-               false, false, false]
+# # Each sensor reading updates some or all of the filter's state. These options give you greater control over which
+# # values from each measurement are fed to the filter. For example, if you have an odometry message as input, but only
+# # want to use its Z position value, then set the entire vector to false, except for the third entry. The order of the
+# # values is x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az. Note that not some message types
+# # do not provide some of the state variables estimated by the filter. For example, a TwistWithCovarianceStamped message
+# # has no pose information, so the first six values would be meaningless in that case. Each vector defaults to all false
+# # if unspecified, effectively making this parameter required for each sensor.
+# twist0_config: [false,  false,  false,
+#                false, false, false,
+#                true, true, false,
+#                false, false, true,
+#                false, false, false]
 
-# If you have high-frequency data or are running with a low frequency parameter value, then you may want to increase
-# the size of the subscription queue so that more measurements are fused.
-twist0_queue_size: 10
+# # If you have high-frequency data or are running with a low frequency parameter value, then you may want to increase
+# # the size of the subscription queue so that more measurements are fused.
+# twist0_queue_size: 10
 
-# [ADVANCED] Large messages in ROS can exhibit strange behavior when they arrive at a high frequency. This is a result
-# of Nagle's algorithm. This option tells the ROS subscriber to use the tcpNoDelay option, which disables Nagle's
-# algorithm.
-twist0_nodelay: false #default false
+# # [ADVANCED] Large messages in ROS can exhibit strange behavior when they arrive at a high frequency. This is a result
+# # of Nagle's algorithm. This option tells the ROS subscriber to use the tcpNoDelay option, which disables Nagle's
+# # algorithm.
+# twist0_nodelay: false #default false
 
-# [ADVANCED] When measuring one pose variable with two sensors, a situation can arise in which both sensors under-
-# report their covariances. This can lead to the filter rapidly jumping back and forth between each measurement as they
-# arrive. In these cases, it often makes sense to (a) correct the measurement covariances, or (b) if velocity is also
-# measured by one of the sensors, let one sensor measure pose, and the other velocity. However, doing (a) or (b) isn't
-# always feasible, and so we expose the differential parameter. When differential mode is enabled, all absolute pose
-# data is converted to velocity data by differentiating the absolute pose measurements. These velocities are then
-# integrated as usual. NOTE: this only applies to sensors that provide pose measurements; setting differential to true
-# for twist measurements has no effect.
-twist0_differential: false
+# # [ADVANCED] When measuring one pose variable with two sensors, a situation can arise in which both sensors under-
+# # report their covariances. This can lead to the filter rapidly jumping back and forth between each measurement as they
+# # arrive. In these cases, it often makes sense to (a) correct the measurement covariances, or (b) if velocity is also
+# # measured by one of the sensors, let one sensor measure pose, and the other velocity. However, doing (a) or (b) isn't
+# # always feasible, and so we expose the differential parameter. When differential mode is enabled, all absolute pose
+# # data is converted to velocity data by differentiating the absolute pose measurements. These velocities are then
+# # integrated as usual. NOTE: this only applies to sensors that provide pose measurements; setting differential to true
+# # for twist measurements has no effect.
+# twist0_differential: false
 
-# [ADVANCED] When the node starts, if this parameter is true, then the first measurement is treated as a "zero point"
-# for all future measurements. While you can achieve the same effect with the differential paremeter, the key
-# difference is that the relative parameter doesn't cause the measurement to be converted to a velocity before
-# integrating it. If you simply want your measurements to start at 0 for a given sensor, set this to true.
-twist0_relative: true
+# # [ADVANCED] When the node starts, if this parameter is true, then the first measurement is treated as a "zero point"
+# # for all future measurements. While you can achieve the same effect with the differential paremeter, the key
+# # difference is that the relative parameter doesn't cause the measurement to be converted to a velocity before
+# # integrating it. If you simply want your measurements to start at 0 for a given sensor, set this to true.
+# twist0_relative: true
 
-# [ADVANCED] If your data is subject to outliers, use these threshold settings, expressed as Mahalanobis distances, to
-# control how far away from the current vehicle state a sensor measurement is permitted to be. Each defaults to
-# numeric_limits<double>::max() if unspecified. It is strongly recommended that these parameters be removed if not
-# required. Data is specified at the level of pose and twist variables, rather than for each variable in isolation.
-# For messages that have both pose and twist data, the parameter specifies to which part of the message we are applying
-# the thresholds.
-#twist0_pose_rejection_threshold: 5
-#twist0_twist_rejection_threshold: 1
 
 imu0: /imu/data
 imu0_config: [false, false, false,
-              true,  true,  true,
+              true, true, true,
               false, false, false,
               true,  true,  true,
               true,  true,  true]
 imu0_nodelay: true #default false
-imu0_differential: false
-imu0_relative: true
+imu0_differential: true
+imu0_relative: false
 imu0_queue_size: 8
-#imu0_pose_rejection_threshold: 0.8                 # Note the difference in parameter names
-#imu0_twist_rejection_threshold: 1.0                #
-#imu0_linear_acceleration_rejection_threshold: 0.8  #
+imu0_pose_rejection_threshold: 0.8                 # Note the difference in parameter names
+imu0_twist_rejection_threshold: 1.0                #
+imu0_linear_acceleration_rejection_threshold: 0.8  #
 
 # [ADVANCED] Some IMUs automatically remove acceleration due to gravity, and others don't. If yours doesn't, please set
 # this to true, and *make sure* your data conforms to REP-103, specifically, that the data is in ENU frame.
 imu0_remove_gravitational_acceleration: true #default true
 gravitational_acceleration: -0.35
+
+pose0: aruco_base_link_pose
+pose0_config: [true,  true,  true,
+               true, true, true,
+               false, false, false,
+               false, false, false,
+               false, false, false]
+# THIS (pose0_differential) MUST BE SET TO FALSE FOR ARUCO DETECTION TO FIX INCORRECT POSE
+pose0_differential: false
+pose0_relative: false
+pose0_queue_size: 5
+pose0_rejection_threshold: 2  # Note the difference in parameter name
+pose0_nodelay: false
 
 # [ADVANCED]  The EKF and UKF models follow a standard predict/correct cycle. During prediction, if there is no
 # acceleration reference, the velocity at time t+1 is simply predicted to be the same as the velocity at time t. During
@@ -177,18 +182,18 @@ deceleration_gains: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 # to be larger, which will cause the filter to trust the incoming measurement more during correction. The values are
 # ordered as x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az. Defaults to the matrix below if
 # unspecified.
-process_noise_covariance: [0.05, 0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-                           0,    0.05, 0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-                           0,    0,    0.06, 0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-                           0,    0,    0,    0.03, 0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-                           0,    0,    0,    0,    0.03, 0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-                           0,    0,    0,    0,    0,    0.06, 0,     0,     0,    0,    0,    0,    0,    0,    0,
+process_noise_covariance: [1,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                           0,    1,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                           0,    0,    1,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                           0,    0,    0,    0.3, 0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                           0,    0,    0,    0,    0.3, 0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                           0,    0,    0,    0,    0,    0.3, 0,     0,     0,    0,    0,    0,    0,    0,    0,
                            0,    0,    0,    0,    0,    0,    0.025, 0,     0,    0,    0,    0,    0,    0,    0,
                            0,    0,    0,    0,    0,    0,    0,     0.025, 0,    0,    0,    0,    0,    0,    0,
                            0,    0,    0,    0,    0,    0,    0,     0,     0.04, 0,    0,    0,    0,    0,    0,
                            0,    0,    0,    0,    0,    0,    0,     0,     0,    0.01, 0,    0,    0,    0,    0,
                            0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0.01, 0,    0,    0,    0,
-                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0.02, 0,    0,    0,
+                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0.01, 0,    0,    0,
                            0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0.01, 0,    0,
                            0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0.01, 0,
                            0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0.015]
@@ -214,7 +219,7 @@ process_noise_covariance: [0.05, 0,    0,    0,    0,    0,    0,     0,     0, 
 # question. Users should take care not to use large values for variables that will not be measured directly. The values
 # are ordered as x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az. Defaults to the matrix below
 #if unspecified.
-#initial_estimate_covariance: [1e-9, 0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
+# initial_estimate_covariance: [1e-9, 0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
 #                              0,    1e-9, 0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
 #                              0,    0,    1e-9, 0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
 #                              0,    0,    0,    1e-9, 0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
@@ -244,5 +249,3 @@ initial_estimate_covariance: [1,    0,    0,    0,    0,    0,    0,    0,    0,
                               0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     1,    0,    0,
                               0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    1,    0,
                               0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    1]
-
-

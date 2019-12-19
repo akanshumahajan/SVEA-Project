@@ -55,6 +55,8 @@ class ArucoParticleFilterRemote():
         # Initialize class variables
         self.time = None
         self.old_time = None
+        self.old_theta = 0
+        self.ang_z_obs = 0
         self.obs_pose_old = None
         self.innov = np.zeros((self.pc,3))
         self.likeli = np.zeros((self.pc,1))
@@ -72,9 +74,8 @@ class ArucoParticleFilterRemote():
 
         # Initialize array of particle states | # particles x 4 [x, y, theta_z, weight]
         self.particles = (np.random.rand(self.pc,4)-0.5)*(2*self.init_cov)
-        # 
-        # Force angles to be on range [-pi, pi]
-        #self.particles[:,2] = np.remainder(self.particles[:,3]+np.pi,2*np.pi)-np.pi
+        # Initialize angles on range [-pi, pi]
+        #self.particles[:,2] = (np.random.rand(self.pc,)-0.5)*(2*np.pi)
         self.particles[:,2] = np.zeros((self.pc,))
         # Set all particle weights equal
         self.particles[:,3] = np.ones((self.pc,))
@@ -101,13 +102,10 @@ class ArucoParticleFilterRemote():
             if self.obs_pose != None and self.obs_pose != self.obs_pose_old:
                 self.obs_update()
                 self.weight()
-                self.resample()
+                self.mult_resample()
+                #self.sys_resample()
                 self.obs_pose_old = self.obs_pose
             
-            # x_guess = np.average(self.particles[:,0])
-            # y_guess = np.average(self.particles[:,1])
-            # theta_guess = np.average(self.particles[:,2])
-            # print(x_guess,", ",y_guess,", ",theta_guess)
             self.particle_publish()
 
 
@@ -120,8 +118,8 @@ class ArucoParticleFilterRemote():
         # Use covariance to calculate gaussian noise for prediction
         pnoise = self.gaussian_noise(self.pcov_matrix)
         # Unpack odometry message
-        vel = self.pred_odom.twist.twist.linear.x
-        #yvel = self.pred_odom.twist.twist.linear.y
+        xvel = self.pred_odom.twist.twist.linear.x
+        yvel = self.pred_odom.twist.twist.linear.y
         #theta = 
         quat = (self.pred_odom.pose.pose.orientation.x, self.pred_odom.pose.pose.orientation.y,
                 self.pred_odom.pose.pose.orientation.z, self.pred_odom.pose.pose.orientation.w)
@@ -132,11 +130,14 @@ class ArucoParticleFilterRemote():
         # Update particle pose estimates based on angular and linear velocities from odometry
         # self.particles[:,0] = self.particles[:,0] + pnoise[:,0] + xvel*dt*np.cos(theta) 
         # self.particles[:,1] = self.particles[:,1] + pnoise[:,1] + yvel*dt*np.sin(theta)  
-        self.particles[:,0] = self.particles[:,0] + pnoise[:,0] + vel*dt*np.cos(self.particles[:,2]) 
-        self.particles[:,1] = self.particles[:,1] + pnoise[:,1] + vel*dt*np.sin(self.particles[:,2])  
-        self.particles[:,2] = self.particles[:,2] + pnoise[:,2] + omega*dt 
+        self.particles[:,0] = self.particles[:,0] + pnoise[:,0] + xvel*dt*np.cos(self.particles[:,2]) 
+        self.particles[:,1] = self.particles[:,1] + pnoise[:,1] + xvel*dt*np.sin(self.particles[:,2])  
+        #self.particles[:,2] = self.particles[:,2] + pnoise[:,2] + omega*dt
+        self.particles[:,2] = self.particles[:,2] + pnoise[:,2] + (theta - self.old_theta)
         # Force angles to be on range [-pi, pi]
-        self.particles[:,2] = np.remainder(self.particles[:,3]+np.pi,2*np.pi)-np.pi
+        self.particles[:,2] = np.remainder(self.particles[:,2]+np.pi,2*np.pi)-np.pi
+        # Update old theta for comparison
+        self.old_theta = theta
 
     # Function for observation update
     def obs_update(self):
@@ -146,35 +147,65 @@ class ArucoParticleFilterRemote():
         #theta_z = tf2_ros.euler_from_quaternion(self.obs_pose.pose.orientation)[2]
         quat = (self.obs_pose.pose.pose.orientation.x, self.obs_pose.pose.pose.orientation.y,
                 self.obs_pose.pose.pose.orientation.z, self.obs_pose.pose.pose.orientation.w)
-        _, _, ang_z_obs = tf.transformations.euler_from_quaternion(quat)
+        _, _, self.ang_z_obs = tf.transformations.euler_from_quaternion(quat)
+        #print(ang_z_obs)
 
         # Calculate Innovation (difference from measurement to particle pose)
         self.innov[:,0] = x_obs - self.particles[:,0]
         self.innov[:,1] = y_obs - self.particles[:,1]
-        self.innov[:,2] = ang_z_obs - self.particles[:,2]
-        # Calculate likelihood
-        self.likeli = 1/(2*np.pi*np.sqrt(np.linalg.det(self.ocov_matrix)))*np.exp(-0.5*np.sum(np.square(self.innov).dot(np.linalg.inv(self.ocov_matrix)), axis=1))
+        self.innov[:,2] = self.ang_z_obs - self.particles[:,2]
+        # Force angles to be on range [-pi, pi]
+        self.innov[:,2] = np.remainder(self.innov[:,2]+np.pi,2*np.pi)-np.pi        
 
+
+        # Calculate likelihood
+        self.likeli = np.exp(-0.5*np.sum(np.square(self.innov).dot(np.linalg.inv(self.ocov_matrix)), axis=1))
+        #*(1/(2*np.pi*np.sqrt(np.linalg.det(self.ocov_matrix)))) # Constant not needed
+        
+        print(sum(self.likeli))
     # Function to reassign weights to particles
     def weight(self):
-        self.particles[:,3] = self.likeli/sum(self.likeli)
+        self.particles[:,3] = self.likeli#/sum(self.likeli)
 
     # Function to resample particles | Systematic Resampling
-    def resample(self):
+    def mult_resample(self):
         # Define cumulative density function
         cdf = np.cumsum(self.particles[:,3])
         cdf /= cdf[cdf.size-1]
+
         # Temporarily store old particle poses and set new to zero
-        temp = self.particles[:,0:2]
+        temp = self.particles[:,[0,1,2]]
+        self.particles = np.zeros((self.pc,4))
+        # Systematic Resampling
+        r = np.random.rand(self.pc,1)
+        for i in range(cdf.size):
+            ind = np.argmax(cdf >= r[i])
+            self.particles[i,[0,1,2]] = temp[ind,:]
+            #print(self.particles[i,:])
+            #self.particles[i,2] = self.ang_z_obs
+        #print(self.particles)
+
+        # Reassign even weight of 1 to all new particles
+        self.particles[:,3] = np.ones((self.pc,))
+
+
+    # Function to resample particles | Systematic Resampling
+    def sys_resample(self):
+        # Define cumulative density function
+        cdf = np.cumsum(self.particles[:,3])
+        cdf /= cdf[cdf.size-1]
+
+        # Temporarily store old particle poses and set new to zero
+        temp = self.particles[:,[0,1,2]]
         self.particles = np.zeros((self.pc,4))
         # Systematic Resampling
         r = np.random.rand(1)/self.pc
         for i in range(cdf.size):
             ind = np.argmax(cdf >= (r + (i-1)/self.pc))
-            self.particles[i,0:2] = temp[ind,:]
+            self.particles[i,[0,1,2]] = temp[ind,:]
         # Reassign even weight of 1 to all new particles
         self.particles[:,3] = np.ones((self.pc,))
-
+        #print(self.particles)
 
 
     ##### Support Functions #####
@@ -183,7 +214,7 @@ class ArucoParticleFilterRemote():
     def particle_publish(self):
         self.pub.pose.pose.position.x = np.average(self.particles[:,0])
         self.pub.pose.pose.position.y = np.average(self.particles[:,1])
-        #self.pub.pose.pose.orientation.x = np.average(self.particles[:,0])
+        self.pub.pose.pose.orientation.z = np.average(self.particles[:,2])
         #self.pub.pose.pose.orientation = trans.transform.rotation
         self.posepub.publish(self.pub)   
 

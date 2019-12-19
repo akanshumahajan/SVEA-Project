@@ -27,8 +27,6 @@
   <!-- Aruco Detection -->
   <include file="$(find aruco_detect)/launch/aruco_detect.launch" />
 
-  <!-- Aruco Detection -->
-  <!--include file="$(find aruco_detect)/launch/aruco_detect.launch" /-->
 
 
 
