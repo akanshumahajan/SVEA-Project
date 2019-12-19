@@ -9,11 +9,11 @@
   <arg name="fiducial_pose_topic" default="/fiducial_transforms"/>  
   <arg name="fiducial_id" default="0"/>  
   <arg name="est_vehicle_frame" default="aruco_base_link"/>
-  <arg name="map_pose_estimate_topic" default="aruco_base_link_pose"/>
+  <arg name="map_pose_estimate_topic" default="/aruco_base_link_pose"/>
   <arg name="map_frame" default="map"/>
   <arg name="output" default="screen"/>
-  <arg name="lin_cov_aruco" default="0.00001"/>
-  <arg name="ang_cov_aruco" default="0.00001"/>
+  <arg name="lin_cov_aruco" default="0.001"/>
+  <arg name="ang_cov_aruco" default="0.001"/>
    
 
 
