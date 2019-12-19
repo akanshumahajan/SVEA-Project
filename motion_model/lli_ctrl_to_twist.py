@@ -23,6 +23,14 @@ class Republish():
         # Read vehicle frame id topic
         param3 = rospy.search_param("est_frame_id")
         self.veh_frame_id = rospy.get_param(param3)
+        # Read max speed
+        param = rospy.search_param("max_speed")
+        self.max_speed = rospy.get_param(param)
+        # Read covariance values
+        param = rospy.search_param("linear_covariance")
+        self.lin_cov = rospy.get_param(param)
+        param = rospy.search_param("angular_covariance")
+        self.ang_cov = rospy.get_param(param)
      
         # Initialize callback variables
         self.ctrl_msg = None
@@ -41,6 +49,8 @@ class Republish():
         # initialize message
         self.twist_msg = TwistWithCovarianceStamped()
         self.twist_msg.header.frame_id = self.veh_frame_id
+        self.twist_msg.twist.covariance = self.cov_matrix_build()
+
         rate = rospy.Rate(100) # 100hz
 
         while not rospy.is_shutdown():
@@ -54,11 +64,10 @@ class Republish():
                 # Velocity range 1st gear (m/s) - assumed linear across range with deadzone [-20,20] 
                 # msg [-127,127] | actual [-1.5,1.5] | direction (back,forward)
                 dz = [-20,20]
-                max_speed = 2.5
                 if self.ctrl_msg.velocity < dz[0]:
-                    c_vel = (self.ctrl_msg.velocity - dz[0])*-1*max_speed/(-127 - dz[0])
+                    c_vel = (self.ctrl_msg.velocity - dz[0])*-1*self.max_speed/(-127 - dz[0])
                 elif self.ctrl_msg.velocity > dz[1]:
-                    c_vel = (self.ctrl_msg.velocity - dz[1])*max_speed/(127 - dz[1])
+                    c_vel = (self.ctrl_msg.velocity - dz[1])*self.max_speed/(127 - dz[1])
                 else:
                     c_vel = 0
 
@@ -79,8 +88,18 @@ class Republish():
                 self.twist_msg.twist.twist.angular.z = ang_vel
 
                 # Publish message
+
                 self.pub.publish(self.twist_msg)
                 rate.sleep()
+
+    def cov_matrix_build(self):
+        self.cov_matrix = [self.lin_cov, 0.0, 0.0, 0.0, 0.0, 0.0,
+                            0.0, self.lin_cov, 0.0, 0.0, 0.0, 0.0,
+                            0.0, 0.0, self.lin_cov, 0.0, 0.0, 0.0,
+                            0.0, 0.0, 0.0, self.ang_cov, 0.0, 0.0,
+                            0.0, 0.0, 0.0, 0.0, self.ang_cov, 0.0,
+                            0.0, 0.0, 0.0, 0.0, 0.0, self.ang_cov]
+        return self.cov_matrix
 
 
     # Callback function for fiducial pose subscription (from aruco_detect)
