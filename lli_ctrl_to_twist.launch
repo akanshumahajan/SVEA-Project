@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+    
+    <node pkg="svea" type="lli_ctrl_to_twist.py" name="ctrl_to_twist" output="screen">
+        <param name="ctrl_message_topic" value="/SVEA0/lli/ctrl_actuated" />
+        <param name="twist_message_topic" value="/cmd_vel_twist" />
+        <param name="est_frame_id" value="base_link" />
+        <param name="max_speed" type="double" value="1.5" />
+        <param name="linear_covariance" type="double" value=".015" />
+        <param name="angular_covariance" type="double" value=".015" />
+        
+    </node>
+
+</launch>
+

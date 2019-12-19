@@ -1,0 +1,47 @@
+<launch>
+  
+  
+  
+  <arg name="est_vehicle_frame" default="aruco_base_link"/>
+  <!-- IMU -->
+  <!-- node ns="imu" name="imu_node" pkg="svea_sensors" type="bno055_i2c_node" respawn="true" respawn_delay="2">
+    <param name="device" type="string" value="/dev/i2c-1"/>
+    <param name="address" type="int" value="40"/> <!- 0x28 == 40 is the default for BNO055 ->
+    <param name="frame_id" type="string" value="imu"/>
+  </node -->
+
+  <!-- Default odometry - I THINK WE SHOULD ONLY RUN THIS ON THE CAR -->
+  <!-- Includes static transforms for sensors -->
+  <!--include file="$(find svea_sensors)/launch/default_odometry.launch" /-->
+
+  <!-- Qualisys System - gives true pose of vehicle -->
+  <include file="$(find qualisys)/launch/qualisys.launch" />
+  <!--include file="$(find qualisys)/launch/qualisys_odom.launch" >
+    <arg name="model" value="SVEA0" />
+    <!-arg name="model" value="logicam_plate" /->
+  </include-->
+
+  <!-- Traffic (Stationary) Camera -->
+  <!-- <include file="$(find video_stream_opencv)/launch/camera.launch" /> -->
+
+  <!-- Aruco Detection -->
+  <include file="$(find aruco_detect)/launch/aruco_detect.launch" />
+
+
+
+
+  <!-- Static transform from ArUco marker to base_link of SVEA6 | MARKER ON SIDE-->
+  <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="aruco_placement" args="0.075 0.05 -0.1 0 3.14 -1.57 fid0 $(arg est_vehicle_frame)" /> -->
+  <!-- Static transform from ArUco marker to base_link of SVEA6 | MARKER ON BACK -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="aruco_placement" args="0.0 0.05 -0.25 0 1.57 -1.57 fid0 $(arg est_vehicle_frame)" />
+  <!-- Static transform from qualisys to map (for RVIZ) -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="make_map" args="0 0 0 0 0 0 1 qualisys map" />
+  <!-- Static transform from camera plate to logicam -->
+  <!--node pkg="tf2_ros" type="static_transform_publisher" name="logicam_to_plate" args="0.2 0 0 -1.57 0 -1.57 logicam_plate logicam_stat" /-->
+  <!-- Static transform from SVEA0 to logicam -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="logicam_to_plate" args="0.2 -0.04 0 -1.57 0 -1.57 SVEA0 logicam_stat" />
+  
+  <!-- Launch RVIZ for project -->
+  <node pkg="rviz" type="rviz" name="$(anon rviz)" args="-d $(find svea)/filtering_project_include/filtering_project.rviz"/>
+
+</launch>
