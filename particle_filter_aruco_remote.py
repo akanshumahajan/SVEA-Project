@@ -156,7 +156,7 @@ class ArucoParticleFilterRemote():
         self.likeli = np.exp(-0.5*np.sum(np.square(self.innov).dot(np.linalg.inv(self.ocov_matrix)), axis=1))
         #*(1/(2*np.pi*np.sqrt(np.linalg.det(self.ocov_matrix)))) # Constant not needed
         
-        print(sum(self.likeli))
+        print(sum(self.likeli)) # Used to ensure filter has not failed [when sum(likelihood) = 0]
     # Function to reassign weights to particles
     def weight(self):
         self.particles[:,3] = self.likeli#/sum(self.likeli) #reweight occurs in resample functions
